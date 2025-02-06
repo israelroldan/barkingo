@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { RefreshCw, Share2 } from "lucide-react"
+import Image from "next/image"
 import {
   getRandomDogBreeds,
   saveBreedsToLocalStorage,
@@ -17,12 +18,40 @@ const Confetti = dynamic(() => import("../Confetti"), { ssr: false })
 const GRID_SIZE = 3
 const TOTAL_BREEDS = GRID_SIZE * GRID_SIZE
 
-export default function BingoGame({ initialCardId }: { initialCardId: string }) {
-  const [dogBreeds, setDogBreeds] = useState<any[]>([])
+interface DogBreed {
+  id: number
+  name: string
+  image: {
+    url: string
+  }
+}
+
+interface BingoGameProps {
+  initialCardId: string
+}
+
+export default function BingoGame({ initialCardId }: BingoGameProps) {
+  const [dogBreeds, setDogBreeds] = useState<DogBreed[]>([])
   const [selectedBreeds, setSelectedBreeds] = useState<Set<number>>(new Set())
   const [bingo, setBingo] = useState(false)
   const [uniqueCode, setUniqueCode] = useState<string>(initialCardId)
   const router = useRouter()
+
+  const checkBingo = useCallback(() => {
+    const lines = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ]
+
+    const hasBingo = lines.some((line) => line.every((i) => selectedBreeds.has(i)))
+    setBingo(hasBingo)
+  }, [selectedBreeds])
 
   useEffect(() => {
     const storedBreeds = getBreedsFromLocalStorage()
@@ -41,7 +70,7 @@ export default function BingoGame({ initialCardId }: { initialCardId: string }) 
 
   useEffect(() => {
     checkBingo()
-  }, [selectedBreeds])
+  }, [checkBingo])
 
   const getNewBreeds = () => {
     if (selectedBreeds.size > 0) {
@@ -71,31 +100,14 @@ export default function BingoGame({ initialCardId }: { initialCardId: string }) 
       }
       return newSelected
     })
-    checkBingo()
-  }
-
-  const checkBingo = () => {
-    const lines = [
-      [0, 1, 2],
-      [3, 4, 5],
-      [6, 7, 8],
-      [0, 3, 6],
-      [1, 4, 7],
-      [2, 5, 8],
-      [0, 4, 8],
-      [2, 4, 6],
-    ]
-
-    const hasBingo = lines.some((line) => line.every((i) => selectedBreeds.has(i)))
-    setBingo(hasBingo)
   }
 
   const getEncouragingMessage = (count: number) => {
-    if (count === 0) return "Let's start spotting some dogs!"
+    if (count === 0) return "Let&apos;s start spotting some dogs!"
     if (count < 3) return "Great start! Keep your eyes peeled!"
-    if (count < 6) return "Wow! You're a regular dog whisperer!"
-    if (count < 8) return "Incredible! You're the talk of the dog park!"
-    return "You're the ultimate dog breed expert!"
+    if (count < 6) return "Wow! You&apos;re a regular dog whisperer!"
+    if (count < 8) return "Incredible! You&apos;re the talk of the dog park!"
+    return "You&apos;re the ultimate dog breed expert!"
   }
 
   const shareCard = () => {
@@ -117,7 +129,7 @@ export default function BingoGame({ initialCardId }: { initialCardId: string }) 
         <>
           <Confetti />
           <div className="mb-4 p-4 bg-yellow-100 text-yellow-700 text-center rounded-md animate-pulse">
-            <h2 className="text-2xl">🎉 Bingo! You're the top dog! 🏆</h2>
+            <h2 className="text-2xl">🎉 Bingo! You&apos;re the top dog! 🏆</h2>
           </div>
         </>
       )}
@@ -130,11 +142,13 @@ export default function BingoGame({ initialCardId }: { initialCardId: string }) 
               selectedBreeds.has(index) ? "ring-4 ring-blue-500" : ""
             }`}
           >
-            <img
+            <Image
               src={breed.image.url || "/placeholder.svg"}
               alt={breed.name}
-              className="w-full h-full object-cover select-none"
-              draggable="false"
+              layout="fill"
+              objectFit="cover"
+              className="select-none"
+              draggable={false}
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pointer-events-none">
               <span className="text-white font-medium text-sm select-none">{breed.name}</span>
@@ -144,7 +158,7 @@ export default function BingoGame({ initialCardId }: { initialCardId: string }) 
       </div>
       <p className="mt-4 text-center text-lg font-semibold">{getEncouragingMessage(selectedBreeds.size)}</p>
       <p className="mt-2 text-center text-base">
-        You've spotted {selectedBreeds.size} out of {TOTAL_BREEDS} breeds!
+        You&apos;ve spotted {selectedBreeds.size} out of {TOTAL_BREEDS} breeds!
       </p>
       <div className="flex justify-between mt-4">
         <button
