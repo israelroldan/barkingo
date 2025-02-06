@@ -1,7 +1,7 @@
 import dogBreeds from "./dogBreeds.json"
 
 function isClient(): boolean {
-  return typeof window !== 'undefined'
+  return typeof window !== "undefined"
 }
 
 export function getRandomDogBreeds(count: number): any[] {
@@ -31,3 +31,4 @@ export function decodeBreedsFromCode(code: string): any[] {
   const ids = code.split("-").map((id) => Number.parseInt(id, 36))
   return ids.map((id) => dogBreeds.find((breed) => breed.id === id)).filter(Boolean)
 }
+

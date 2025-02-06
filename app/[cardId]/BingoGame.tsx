@@ -12,6 +12,7 @@ import {
 } from "../../utils/dogBreedUtils"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
+import { useLongPress } from "../../hooks/useLongPress"
 
 const Confetti = dynamic(() => import("../Confetti"), { ssr: false })
 
@@ -53,26 +54,7 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
     setBingo(hasBingo)
   }, [selectedBreeds])
 
-  useEffect(() => {
-    const storedBreeds = getBreedsFromLocalStorage()
-    if (storedBreeds && storedBreeds.length === TOTAL_BREEDS) {
-      setDogBreeds(storedBreeds)
-    } else {
-      const decodedBreeds = decodeBreedsFromCode(initialCardId)
-      if (decodedBreeds.length === TOTAL_BREEDS) {
-        setDogBreeds(decodedBreeds)
-        saveBreedsToLocalStorage(decodedBreeds)
-      } else {
-        getNewBreeds()
-      }
-    }
-  }, [initialCardId])
-
-  useEffect(() => {
-    checkBingo()
-  }, [checkBingo])
-
-  const getNewBreeds = () => {
+  const getNewBreeds = useCallback(() => {
     if (selectedBreeds.size > 0) {
       const confirmNewGame = window.confirm(
         "Starting a new game will lose your current progress. Are you sure you want to continue?",
@@ -88,9 +70,28 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
     const newCode = generateUniqueCode(newBreeds)
     setUniqueCode(newCode)
     router.push(`/${newCode}`)
-  }
+  }, [selectedBreeds, router])
 
-  const toggleBreed = (index: number) => {
+  useEffect(() => {
+    const storedBreeds = getBreedsFromLocalStorage()
+    if (storedBreeds && storedBreeds.length === TOTAL_BREEDS) {
+      setDogBreeds(storedBreeds)
+    } else {
+      const decodedBreeds = decodeBreedsFromCode(initialCardId)
+      if (decodedBreeds.length === TOTAL_BREEDS) {
+        setDogBreeds(decodedBreeds)
+        saveBreedsToLocalStorage(decodedBreeds)
+      } else {
+        getNewBreeds()
+      }
+    }
+  }, [initialCardId, getNewBreeds])
+
+  useEffect(() => {
+    checkBingo()
+  }, [checkBingo])
+
+  const toggleBreed = useCallback((index: number) => {
     setSelectedBreeds((prevSelected) => {
       const newSelected = new Set(prevSelected)
       if (newSelected.has(index)) {
@@ -100,7 +101,20 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
       }
       return newSelected
     })
-  }
+  }, [])
+
+  const handleLongPress = useCallback(
+    (index: number) => {
+      const breed = dogBreeds[index]
+      router.push(`/breed/${breed.id}`)
+    },
+    [dogBreeds, router],
+  )
+
+  const longPressEvents = useLongPress(handleLongPress, toggleBreed, {
+    shouldPreventDefault: true,
+    delay: 500,
+  })
 
   const getEncouragingMessage = (count: number) => {
     if (count === 0) return "Let's start spotting some dogs!"
@@ -123,7 +137,7 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-md">
+    <div className="container mx-auto px-4 py-8 max-w-md min-h-screen flex flex-col justify-center">
       <h1 className="text-4xl font-bold mb-6 text-center">🐾 Barkingo! 🐾</h1>
       {bingo && (
         <>
@@ -133,37 +147,42 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
           </div>
         </>
       )}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {dogBreeds.map((breed, index) => (
-          <div
-            key={breed.id}
-            onClick={() => toggleBreed(index)}
-            className={`cursor-pointer relative aspect-square rounded-2xl overflow-hidden shadow-md transition-transform hover:scale-105 ${
-              selectedBreeds.has(index) ? "ring-4 ring-blue-500" : ""
-            }`}
-          >
-            <Image
-              src={breed.image.url || "/placeholder.svg"}
-              alt={breed.name}
-              fill
-              sizes="(max-width: 768px) 33vw, 20vw"
-              className="object-cover select-none"
-              draggable={false}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement
-                target.src = "/placeholder.svg"
-              }}
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pointer-events-none">
-              <span className="text-white font-medium text-sm select-none">{breed.name}</span>
+      <div className="grid grid-cols-3 gap-2 mb-4 aspect-square">
+        {dogBreeds.map((breed, index) => {
+          const events = longPressEvents(index)
+          return (
+            <div
+              key={breed.id}
+              {...events}
+              className={`cursor-pointer relative aspect-square rounded-2xl overflow-hidden shadow-md transition-transform hover:scale-105 ${
+                selectedBreeds.has(index) ? "ring-4 ring-blue-500" : ""
+              }`}
+            >
+              <Image
+                src={breed.image.url || "/placeholder.svg"}
+                alt={breed.name}
+                fill
+                sizes="(max-width: 768px) 33vw, 20vw"
+                className="object-cover select-none"
+                draggable={false}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement
+                  target.src = "/placeholder.svg"
+                }}
+              />
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pointer-events-none">
+                <span className="text-white font-medium text-sm select-none">{breed.name}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
-      <p className="mt-4 text-center text-lg font-semibold">{getEncouragingMessage(selectedBreeds.size)}</p>
-      <p className="mt-2 text-center text-base">
-        You&apos;ve spotted {selectedBreeds.size} out of {TOTAL_BREEDS} breeds!
-      </p>
+      <div className="h-20">
+        <p className="text-center text-lg font-semibold">{getEncouragingMessage(selectedBreeds.size)}</p>
+        <p className="mt-2 text-center text-base">
+          You&apos;ve spotted {selectedBreeds.size} out of {TOTAL_BREEDS} breeds!
+        </p>
+      </div>
       <div className="flex justify-between mt-4">
         <button
           onClick={getNewBreeds}

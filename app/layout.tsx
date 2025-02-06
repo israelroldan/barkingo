@@ -15,7 +15,7 @@ export const metadata: Metadata = {
       "Tail-wagging fun awaits! Can you sniff out all the dog breeds? Play Barkingo now and become the top dog!",
     images: [
       {
-        url: "https://example.com/barkingo-og-image.jpg", // Replace with your actual OG image URL
+        url: "https://example.com/barkingo-og-image.jpg",
         width: 1200,
         height: 630,
         alt: "Barkingo - Dog Breed Bingo Game",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "🐾 Barkingo! - The Ulti-mutt Dog Breed Game",
     description: "Howl you like to play the most paw-some dog breed bingo? Barkingo is here to make your tail wag!",
-    images: ["https://example.com/barkingo-twitter-image.jpg"], // Replace with your actual Twitter card image URL
+    images: ["https://example.com/barkingo-twitter-image.jpg"],
   },
 }
 
