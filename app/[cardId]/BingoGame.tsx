@@ -103,11 +103,11 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
   }
 
   const getEncouragingMessage = (count: number) => {
-    if (count === 0) return "Let&apos;s start spotting some dogs!"
+    if (count === 0) return "Let's start spotting some dogs!"
     if (count < 3) return "Great start! Keep your eyes peeled!"
-    if (count < 6) return "Wow! You&apos;re a regular dog whisperer!"
-    if (count < 8) return "Incredible! You&apos;re the talk of the dog park!"
-    return "You&apos;re the ultimate dog breed expert!"
+    if (count < 6) return "Wow! You're a regular dog whisperer!"
+    if (count < 8) return "Incredible! You're the talk of the dog park!"
+    return "You're the ultimate dog breed expert!"
   }
 
   const shareCard = () => {
