@@ -145,10 +145,14 @@ export default function BingoGame({ initialCardId }: BingoGameProps) {
             <Image
               src={breed.image.url || "/placeholder.svg"}
               alt={breed.name}
-              layout="fill"
-              objectFit="cover"
-              className="select-none"
+              fill
+              sizes="(max-width: 768px) 33vw, 20vw"
+              className="object-cover select-none"
               draggable={false}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement
+                target.src = "/placeholder.svg"
+              }}
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-3 pointer-events-none">
               <span className="text-white font-medium text-sm select-none">{breed.name}</span>
